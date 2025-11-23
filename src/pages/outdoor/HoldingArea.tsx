@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Filter, Download, Package } from "lucide-react";
+import { useState, useMemo, useCallback, useRef } from "react";
+import { Plus, Filter, Download, Trash2, Edit2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
@@ -10,75 +10,118 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { StatusBadge, StatusType } from "../../components/common/StatusBadge";
 import { StatsCard } from "../../components/common/StatsCard";
 import { MapPin, CheckCircle, Clock, TruckIcon } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import {
+  addRecord,
+  updateRecord,
+  deleteRecord,
+  setSearchTerm,
+  setFilterStatus,
+  setEditingId,
+  type HoldingAreaRecord,
+} from "../../store/slices/holdingAreaSlice";
 
 export function HoldingArea() {
+  const dispatch = useAppDispatch();
+  const { records, searchTerm, filterStatus, editingId } = useAppSelector((state) => state.holdingArea);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
+  const [editingRecord, setEditingRecord] = useState<HoldingAreaRecord | null>(null);
+
+  const formRefs = {
+    id: useRef<HTMLInputElement>(null),
+    date: useRef<HTMLInputElement>(null),
+    batchID: useRef<HTMLInputElement>(null),
+    crop: useRef<HTMLSelectElement>(null),
+    variety: useRef<HTMLInputElement>(null),
+    quantity: useRef<HTMLInputElement>(null),
+    location: useRef<HTMLSelectElement>(null),
+    condition: useRef<HTMLSelectElement>(null),
+    dispatchDate: useRef<HTMLInputElement>(null),
+    status: useRef<HTMLSelectElement>(null),
+  };
 
   const stats = [
-    { title: "Plants in Holding", value: "12,540", icon: MapPin },
-    { title: "Ready for Dispatch", value: "8,200", icon: CheckCircle },
-    { title: "Pending QC", value: "3,340", icon: Clock },
-    { title: "Dispatched Today", value: "1,000", icon: TruckIcon, trend: { value: "+200 vs yesterday", isPositive: true } },
+    { title: "Plants in Holding", value: records.reduce((sum, r) => sum + r.quantity, 0).toString(), icon: MapPin },
+    { title: "Ready for Dispatch", value: records.filter((r) => r.status === "completed").length.toString(), icon: CheckCircle },
+    { title: "Pending QC", value: records.filter((r) => r.status === "pending").length.toString(), icon: Clock },
+    { title: "Dispatched Today", value: records.filter((r) => r.status === "active").length.toString(), icon: TruckIcon, trend: { value: "+200 vs yesterday", isPositive: true } },
   ];
 
-  const holdingData = [
-    {
-      id: "HA-2024-001",
-      date: "2024-11-18",
-      batchID: "SH-2024-001",
-      crop: "Banana",
-      variety: "Grand Naine",
-      quantity: 1950,
-      location: "Zone A-1",
-      daysinHolding: 3,
-      condition: "Excellent",
-      dispatchDate: "2024-11-25",
-      status: "active" as StatusType,
-    },
-    {
-      id: "HA-2024-002",
-      date: "2024-11-16",
-      batchID: "SH-2024-002",
-      crop: "Bamboo",
-      variety: "Dendrocalamus",
-      quantity: 1450,
-      location: "Zone A-2",
-      daysinHolding: 5,
-      condition: "Good",
-      dispatchDate: "2024-11-23",
-      status: "completed" as StatusType,
-    },
-    {
-      id: "HA-2024-003",
-      date: "2024-11-20",
-      batchID: "SH-2024-003",
-      crop: "Teak",
-      variety: "Tectona grandis",
-      quantity: 2040,
-      location: "Zone B-1",
-      daysinHolding: 1,
-      condition: "Excellent",
-      dispatchDate: "2024-11-28",
-      status: "pending" as StatusType,
-    },
-    {
-      id: "HA-2024-004",
-      date: "2024-11-19",
-      batchID: "SH-2024-004",
-      crop: "Ornamental",
-      variety: "Anthurium",
-      quantity: 1600,
-      location: "Zone B-2",
-      daysinHolding: 2,
-      condition: "Good",
-      dispatchDate: "2024-11-26",
-      status: "active" as StatusType,
-    },
-  ];
+  const filteredRecords = useMemo(() => {
+    return records.filter((record) => {
+      const matchesSearch = Object.values(record).some((val) =>
+        val?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      const matchesFilter = filterValue === "all" || record.status === filterValue;
+      return matchesSearch && matchesFilter;
+    });
+  }, [records, searchTerm, filterValue]);
+
+  const handleAdd = useCallback(() => {
+    const newRecord: HoldingAreaRecord = {
+      id: formRefs.id.current?.value || `HA-2024-${records.length + 1}`,
+      date: formRefs.date.current?.value || "",
+      batchID: formRefs.batchID.current?.value || "",
+      crop: formRefs.crop.current?.value || "",
+      variety: formRefs.variety.current?.value || "",
+      quantity: parseInt(formRefs.quantity.current?.value || "0"),
+      location: formRefs.location.current?.value || "",
+      daysinHolding: 0,
+      condition: formRefs.condition.current?.value || "",
+      dispatchDate: formRefs.dispatchDate.current?.value || "",
+      status: (formRefs.status.current?.value || "pending") as StatusType,
+    };
+
+    if (editingId && editingRecord) {
+      dispatch(updateRecord({ ...newRecord, id: editingRecord.id, daysinHolding: editingRecord.daysinHolding }));
+      dispatch(setEditingId(null));
+      setEditingRecord(null);
+    } else {
+      dispatch(addRecord(newRecord));
+    }
+
+    setIsAddModalOpen(false);
+    Object.values(formRefs).forEach((ref) => {
+      if (ref.current) ref.current.value = "";
+    });
+  }, [dispatch, editingId, editingRecord, records.length]);
+
+  const handleEdit = useCallback((record: HoldingAreaRecord) => {
+    setEditingRecord(record);
+    dispatch(setEditingId(record.id));
+
+    setTimeout(() => {
+      if (formRefs.id.current) formRefs.id.current.value = record.id;
+      if (formRefs.date.current) formRefs.date.current.value = record.date;
+      if (formRefs.batchID.current) formRefs.batchID.current.value = record.batchID;
+      if (formRefs.crop.current) formRefs.crop.current.value = record.crop;
+      if (formRefs.variety.current) formRefs.variety.current.value = record.variety;
+      if (formRefs.quantity.current) formRefs.quantity.current.value = record.quantity.toString();
+      if (formRefs.location.current) formRefs.location.current.value = record.location;
+      if (formRefs.condition.current) formRefs.condition.current.value = record.condition;
+      if (formRefs.dispatchDate.current) formRefs.dispatchDate.current.value = record.dispatchDate;
+      if (formRefs.status.current) formRefs.status.current.value = record.status;
+    }, 0);
+
+    setIsAddModalOpen(true);
+  }, [dispatch]);
+
+  const handleDelete = useCallback((id: string) => {
+    dispatch(deleteRecord(id));
+  }, [dispatch]);
+
+  const handleCloseModal = useCallback(() => {
+    setIsAddModalOpen(false);
+    dispatch(setEditingId(null));
+    setEditingRecord(null);
+    Object.values(formRefs).forEach((ref) => {
+      if (ref.current) ref.current.value = "";
+    });
+  }, [dispatch]);
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1>Holding Area</h1>
@@ -102,90 +145,91 @@ export function HoldingArea() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Add Holding Area Record</DialogTitle>
+                <DialogTitle>{editingId ? "Edit Record" : "Add Holding Area Record"}</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4 py-4 max-h-96 overflow-y-auto">
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input type="date" />
+                  <Input ref={formRefs.date} type="date" />
                 </div>
                 <div className="space-y-2">
                   <Label>Batch ID</Label>
-                  <Input placeholder="SH-2024-XXX" />
+                  <Input ref={formRefs.batchID} placeholder="SH-2024-XXX" />
                 </div>
                 <div className="space-y-2">
                   <Label>Crop Type</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.crop as any}>
                       <SelectValue placeholder="Select crop" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="banana">Banana</SelectItem>
-                      <SelectItem value="bamboo">Bamboo</SelectItem>
-                      <SelectItem value="teak">Teak</SelectItem>
-                      <SelectItem value="ornamental">Ornamental</SelectItem>
+                      <SelectItem value="Banana">Banana</SelectItem>
+                      <SelectItem value="Bamboo">Bamboo</SelectItem>
+                      <SelectItem value="Teak">Teak</SelectItem>
+                      <SelectItem value="Ornamental">Ornamental</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Variety</Label>
-                  <Input placeholder="Enter variety" />
+                  <Input ref={formRefs.variety} placeholder="Enter variety" />
                 </div>
                 <div className="space-y-2">
                   <Label>Quantity</Label>
-                  <Input type="number" placeholder="1950" />
+                  <Input ref={formRefs.quantity} type="number" placeholder="1950" />
                 </div>
                 <div className="space-y-2">
                   <Label>Location Zone</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.location.current) formRefs.location.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.location as any}>
                       <SelectValue placeholder="Select zone" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="a1">Zone A-1</SelectItem>
-                      <SelectItem value="a2">Zone A-2</SelectItem>
-                      <SelectItem value="b1">Zone B-1</SelectItem>
-                      <SelectItem value="b2">Zone B-2</SelectItem>
+                      <SelectItem value="Zone A-1">Zone A-1</SelectItem>
+                      <SelectItem value="Zone A-2">Zone A-2</SelectItem>
+                      <SelectItem value="Zone B-1">Zone B-1</SelectItem>
+                      <SelectItem value="Zone B-2">Zone B-2</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Plant Condition</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.condition.current) formRefs.condition.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.condition as any}>
                       <SelectValue placeholder="Select condition" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="excellent">Excellent</SelectItem>
-                      <SelectItem value="good">Good</SelectItem>
-                      <SelectItem value="fair">Fair</SelectItem>
+                      <SelectItem value="Excellent">Excellent</SelectItem>
+                      <SelectItem value="Good">Good</SelectItem>
+                      <SelectItem value="Fair">Fair</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Expected Dispatch Date</Label>
-                  <Input type="date" />
+                  <Input ref={formRefs.dispatchDate} type="date" />
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.status.current) formRefs.status.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.status as any}>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending QC</SelectItem>
-                      <SelectItem value="active">Ready for Dispatch</SelectItem>
-                      <SelectItem value="completed">Dispatched</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="contaminated">Contaminated</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                <Button variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={() => setIsAddModalOpen(false)}>
-                  Save Record
+                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
+                  {editingId ? "Update" : "Save"} Record
                 </Button>
               </div>
             </DialogContent>
@@ -193,140 +237,74 @@ export function HoldingArea() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <StatsCard key={index} {...stat} />
         ))}
       </div>
 
-      {/* Zone Layout */}
-      <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
-        <h3 className="mb-4">Storage Zones Overview</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="p-6 bg-gradient-to-br from-[#4CAF50]/10 to-[#4CAF50]/5 border-[#4CAF50]/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Package className="w-5 h-5 text-[#4CAF50]" />
-              <h4>Zone A-1</h4>
-            </div>
-            <p className="text-[#555555]">3,200 plants</p>
-            <p className="text-sm text-[#717182] mt-1">65% capacity</p>
-          </Card>
-          <Card className="p-6 bg-gradient-to-br from-[#4CAF50]/10 to-[#4CAF50]/5 border-[#4CAF50]/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Package className="w-5 h-5 text-[#4CAF50]" />
-              <h4>Zone A-2</h4>
-            </div>
-            <p className="text-[#555555]">2,840 plants</p>
-            <p className="text-sm text-[#717182] mt-1">58% capacity</p>
-          </Card>
-          <Card className="p-6 bg-gradient-to-br from-[#4CAF50]/10 to-[#4CAF50]/5 border-[#4CAF50]/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Package className="w-5 h-5 text-[#4CAF50]" />
-              <h4>Zone B-1</h4>
-            </div>
-            <p className="text-[#555555]">3,900 plants</p>
-            <p className="text-sm text-[#717182] mt-1">78% capacity</p>
-          </Card>
-          <Card className="p-6 bg-gradient-to-br from-[#4CAF50]/10 to-[#4CAF50]/5 border-[#4CAF50]/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Package className="w-5 h-5 text-[#4CAF50]" />
-              <h4>Zone B-2</h4>
-            </div>
-            <p className="text-[#555555]">2,600 plants</p>
-            <p className="text-sm text-[#717182] mt-1">52% capacity</p>
-          </Card>
-        </div>
-      </Card>
-
-      {/* Main Table */}
       <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
         <div className="flex items-center justify-between mb-4">
+          <div className="flex gap-4 items-center">
+            <Input
+              placeholder="Search holding area..."
+              className="max-w-xs"
+              value={searchTerm}
+              onChange={(e) => dispatch(setSearchTerm(e.target.value))}
+            />
+            <Select value={filterValue} onValueChange={(v) => setFilterValue(v as StatusType | "all")}>
+              <SelectTrigger className="max-w-xs">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="contaminated">Contaminated</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <h3>Holding Area Register</h3>
-          <Input placeholder="Search holding records..." className="max-w-xs" />
         </div>
         <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#F5F5F5]">
-                <TableHead>ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Batch ID</TableHead>
-                <TableHead>Crop</TableHead>
-                <TableHead>Variety</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Days</TableHead>
-                <TableHead>Condition</TableHead>
-                <TableHead>Dispatch Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="font-bold text-[#333333]">ID</TableHead>
+                <TableHead className="font-bold text-[#333333]">Batch ID</TableHead>
+                <TableHead className="font-bold text-[#333333]">Crop</TableHead>
+                <TableHead className="font-bold text-[#333333]">Quantity</TableHead>
+                <TableHead className="font-bold text-[#333333]">Location</TableHead>
+                <TableHead className="font-bold text-[#333333]">Condition</TableHead>
+                <TableHead className="font-bold text-[#333333]">Status</TableHead>
+                <TableHead className="font-bold text-[#333333]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {holdingData.map((row) => (
-                <TableRow key={row.id} className="hover:bg-[#F3FFF4] transition-colors">
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell>{row.date}</TableCell>
-                  <TableCell>{row.batchID}</TableCell>
-                  <TableCell>{row.crop}</TableCell>
-                  <TableCell>{row.variety}</TableCell>
-                  <TableCell>{row.quantity}</TableCell>
-                  <TableCell>{row.location}</TableCell>
-                  <TableCell>{row.daysinHolding}</TableCell>
+              {filteredRecords.map((record) => (
+                <TableRow key={record.id} className="hover:bg-[#F3FFF4] transition-colors">
+                  <TableCell>{record.id}</TableCell>
+                  <TableCell>{record.batchID}</TableCell>
+                  <TableCell>{record.crop}</TableCell>
+                  <TableCell>{record.quantity}</TableCell>
+                  <TableCell>{record.location}</TableCell>
+                  <TableCell>{record.condition}</TableCell>
                   <TableCell>
-                    <span className={row.condition === "Excellent" ? "text-[#4CAF50]" : "text-[#555555]"}>
-                      {row.condition}
-                    </span>
+                    <StatusBadge status={record.status} />
                   </TableCell>
-                  <TableCell>{row.dispatchDate}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={row.status} />
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">Edit</Button>
+                  <TableCell className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(record)}>
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(record.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
-      </Card>
-
-      {/* Dispatch Schedule */}
-      <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
-        <h3 className="mb-4">Upcoming Dispatches</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-[#F3FFF4] rounded-lg">
-            <div>
-              <p>Bamboo - Zone A-2</p>
-              <p className="text-sm text-[#717182]">1,450 plants</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm">Nov 23, 2024</p>
-              <StatusBadge status="completed" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-[#F3FFF4] rounded-lg">
-            <div>
-              <p>Banana - Zone A-1</p>
-              <p className="text-sm text-[#717182]">1,950 plants</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm">Nov 25, 2024</p>
-              <StatusBadge status="active" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-[#F3FFF4] rounded-lg">
-            <div>
-              <p>Ornamental - Zone B-2</p>
-              <p className="text-sm text-[#717182]">1,600 plants</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm">Nov 26, 2024</p>
-              <StatusBadge status="active" />
-            </div>
-          </div>
         </div>
       </Card>
     </div>

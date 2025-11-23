@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Filter, Download } from "lucide-react";
+import { useState, useMemo, useCallback, useRef } from "react";
+import { Plus, Filter, Download, Trash2, Edit2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
@@ -10,83 +10,126 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { StatusBadge, StatusType } from "../../components/common/StatusBadge";
 import { StatsCard } from "../../components/common/StatsCard";
 import { TreePine, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import {
+  addRecord,
+  updateRecord,
+  deleteRecord,
+  setSearchTerm,
+  setFilterStatus,
+  setEditingId,
+  type SecondaryHardeningRecord,
+} from "../../store/slices/secondaryHardeningSlice";
 
 export function SecondaryHardening() {
+  const dispatch = useAppDispatch();
+  const { records, searchTerm, filterStatus, editingId } = useAppSelector((state) => state.secondaryHardening);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
+  const [editingRecord, setEditingRecord] = useState<SecondaryHardeningRecord | null>(null);
+
+  const formRefs = {
+    id: useRef<HTMLInputElement>(null),
+    date: useRef<HTMLInputElement>(null),
+    batchName: useRef<HTMLInputElement>(null),
+    crop: useRef<HTMLSelectElement>(null),
+    tunnel: useRef<HTMLSelectElement>(null),
+    bed: useRef<HTMLSelectElement>(null),
+    row: useRef<HTMLInputElement>(null),
+    cavity: useRef<HTMLInputElement>(null),
+    plants: useRef<HTMLInputElement>(null),
+    workers: useRef<HTMLInputElement>(null),
+    waitingPeriod: useRef<HTMLInputElement>(null),
+    survivability: useRef<HTMLInputElement>(null),
+    status: useRef<HTMLSelectElement>(null),
+  };
 
   const stats = [
-    { title: "Active Batches", value: "24", icon: TreePine, trend: { value: "+4 this week", isPositive: true } },
-    { title: "Ready for Dispatch", value: "6,120", icon: CheckCircle },
-    { title: "In Progress", value: "12", icon: Clock },
-    { title: "Monitoring Required", value: "3", icon: AlertCircle },
+    { title: "Active Batches", value: records.length.toString(), icon: TreePine, trend: { value: "+4 this week", isPositive: true } },
+    { title: "Ready for Dispatch", value: records.filter((r) => r.status === "completed").length.toString(), icon: CheckCircle },
+    { title: "In Progress", value: records.filter((r) => r.status === "active").length.toString(), icon: Clock },
+    { title: "Monitoring Required", value: records.filter((r) => r.status === "pending").length.toString(), icon: AlertCircle },
   ];
 
-  const secondaryData = [
-    {
-      id: "SH-2024-001",
-      date: "2024-11-10",
-      batchName: "Banana-GN-Oct",
-      crop: "Banana",
-      tunnel: "SH-T1",
-      bed: "SB1",
-      row: "SR1-SR4",
-      cavity: "72",
-      plants: 2000,
-      workers: 3,
-      waitingPeriod: "21 days",
-      survivability: "96%",
-      status: "completed" as StatusType,
-    },
-    {
-      id: "SH-2024-002",
-      date: "2024-11-12",
-      batchName: "Bamboo-DC-Oct",
-      crop: "Bamboo",
-      tunnel: "SH-T2",
-      bed: "SB2",
-      row: "SR1-SR3",
-      cavity: "72",
-      plants: 1500,
-      workers: 2,
-      waitingPeriod: "28 days",
-      survivability: "94%",
-      status: "active" as StatusType,
-    },
-    {
-      id: "SH-2024-003",
-      date: "2024-11-15",
-      batchName: "Teak-TG-Oct",
-      crop: "Teak",
-      tunnel: "SH-T1",
-      bed: "SB3",
-      row: "SR1-SR5",
-      cavity: "50",
-      plants: 2200,
-      workers: 3,
-      waitingPeriod: "35 days",
-      survivability: "92%",
-      status: "active" as StatusType,
-    },
-    {
-      id: "SH-2024-004",
-      date: "2024-11-18",
-      batchName: "Ornamental-A-Oct",
-      crop: "Ornamental",
-      tunnel: "SH-T3",
-      bed: "SB1",
-      row: "SR1-SR4",
-      cavity: "40",
-      plants: 1800,
-      workers: 3,
-      waitingPeriod: "21 days",
-      survivability: "89%",
-      status: "pending" as StatusType,
-    },
-  ];
+  const filteredRecords = useMemo(() => {
+    return records.filter((record) => {
+      const matchesSearch = Object.values(record).some((val) =>
+        val?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      const matchesFilter = filterValue === "all" || record.status === filterValue;
+      return matchesSearch && matchesFilter;
+    });
+  }, [records, searchTerm, filterValue]);
+
+  const handleAdd = useCallback(() => {
+    const newRecord: SecondaryHardeningRecord = {
+      id: formRefs.id.current?.value || `SH-2024-${records.length + 1}`,
+      date: formRefs.date.current?.value || "",
+      batchName: formRefs.batchName.current?.value || "",
+      crop: formRefs.crop.current?.value || "",
+      tunnel: formRefs.tunnel.current?.value || "",
+      bed: formRefs.bed.current?.value || "",
+      row: formRefs.row.current?.value || "",
+      cavity: formRefs.cavity.current?.value || "",
+      plants: parseInt(formRefs.plants.current?.value || "0"),
+      workers: parseInt(formRefs.workers.current?.value || "0"),
+      waitingPeriod: formRefs.waitingPeriod.current?.value || "",
+      survivability: formRefs.survivability.current?.value || "",
+      status: (formRefs.status.current?.value || "pending") as StatusType,
+    };
+
+    if (editingId && editingRecord) {
+      dispatch(updateRecord({ ...newRecord, id: editingRecord.id }));
+      dispatch(setEditingId(null));
+      setEditingRecord(null);
+    } else {
+      dispatch(addRecord(newRecord));
+    }
+
+    setIsAddModalOpen(false);
+    Object.values(formRefs).forEach((ref) => {
+      if (ref.current) ref.current.value = "";
+    });
+  }, [dispatch, editingId, editingRecord, records.length]);
+
+  const handleEdit = useCallback((record: SecondaryHardeningRecord) => {
+    setEditingRecord(record);
+    dispatch(setEditingId(record.id));
+
+    setTimeout(() => {
+      if (formRefs.id.current) formRefs.id.current.value = record.id;
+      if (formRefs.date.current) formRefs.date.current.value = record.date;
+      if (formRefs.batchName.current) formRefs.batchName.current.value = record.batchName;
+      if (formRefs.crop.current) formRefs.crop.current.value = record.crop;
+      if (formRefs.tunnel.current) formRefs.tunnel.current.value = record.tunnel;
+      if (formRefs.bed.current) formRefs.bed.current.value = record.bed;
+      if (formRefs.row.current) formRefs.row.current.value = record.row;
+      if (formRefs.cavity.current) formRefs.cavity.current.value = record.cavity;
+      if (formRefs.plants.current) formRefs.plants.current.value = record.plants.toString();
+      if (formRefs.workers.current) formRefs.workers.current.value = record.workers.toString();
+      if (formRefs.waitingPeriod.current) formRefs.waitingPeriod.current.value = record.waitingPeriod;
+      if (formRefs.survivability.current) formRefs.survivability.current.value = record.survivability;
+      if (formRefs.status.current) formRefs.status.current.value = record.status;
+    }, 0);
+
+    setIsAddModalOpen(true);
+  }, [dispatch]);
+
+  const handleDelete = useCallback((id: string) => {
+    dispatch(deleteRecord(id));
+  }, [dispatch]);
+
+  const handleCloseModal = useCallback(() => {
+    setIsAddModalOpen(false);
+    dispatch(setEditingId(null));
+    setEditingRecord(null);
+    Object.values(formRefs).forEach((ref) => {
+      if (ref.current) ref.current.value = "";
+    });
+  }, [dispatch]);
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1>Secondary Hardening</h1>
@@ -110,101 +153,102 @@ export function SecondaryHardening() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Add Secondary Hardening Record</DialogTitle>
+                <DialogTitle>{editingId ? "Edit Record" : "Add Secondary Hardening Record"}</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4 py-4 max-h-96 overflow-y-auto">
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input type="date" />
+                  <Input ref={formRefs.date} type="date" />
                 </div>
                 <div className="space-y-2">
                   <Label>Batch Name</Label>
-                  <Input placeholder="e.g., Banana-GN-Oct" />
+                  <Input ref={formRefs.batchName} placeholder="e.g., Banana-GN-Oct" />
                 </div>
                 <div className="space-y-2">
                   <Label>Crop Type</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.crop as any}>
                       <SelectValue placeholder="Select crop" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="banana">Banana</SelectItem>
-                      <SelectItem value="bamboo">Bamboo</SelectItem>
-                      <SelectItem value="teak">Teak</SelectItem>
-                      <SelectItem value="ornamental">Ornamental</SelectItem>
+                      <SelectItem value="Banana">Banana</SelectItem>
+                      <SelectItem value="Bamboo">Bamboo</SelectItem>
+                      <SelectItem value="Teak">Teak</SelectItem>
+                      <SelectItem value="Ornamental">Ornamental</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Tunnel</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.tunnel.current) formRefs.tunnel.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.tunnel as any}>
                       <SelectValue placeholder="Select tunnel" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sht1">SH-T1</SelectItem>
-                      <SelectItem value="sht2">SH-T2</SelectItem>
-                      <SelectItem value="sht3">SH-T3</SelectItem>
+                      <SelectItem value="SH-T1">SH-T1</SelectItem>
+                      <SelectItem value="SH-T2">SH-T2</SelectItem>
+                      <SelectItem value="SH-T3">SH-T3</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Bed</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.bed.current) formRefs.bed.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.bed as any}>
                       <SelectValue placeholder="Select bed" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sb1">SB1</SelectItem>
-                      <SelectItem value="sb2">SB2</SelectItem>
-                      <SelectItem value="sb3">SB3</SelectItem>
+                      <SelectItem value="SB1">SB1</SelectItem>
+                      <SelectItem value="SB2">SB2</SelectItem>
+                      <SelectItem value="SB3">SB3</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Row</Label>
-                  <Input placeholder="e.g., SR1-SR4" />
+                  <Input ref={formRefs.row} placeholder="e.g., SR1-SR4" />
                 </div>
                 <div className="space-y-2">
                   <Label>Cavity Size</Label>
-                  <Input type="number" placeholder="72" />
+                  <Input ref={formRefs.cavity} type="number" placeholder="72" />
                 </div>
                 <div className="space-y-2">
                   <Label>Number of Plants</Label>
-                  <Input type="number" placeholder="2000" />
+                  <Input ref={formRefs.plants} type="number" placeholder="2000" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Number of Workers</Label>
-                  <Input type="number" placeholder="3" />
+                  <Label>Workers</Label>
+                  <Input ref={formRefs.workers} type="number" placeholder="3" />
                 </div>
                 <div className="space-y-2">
                   <Label>Waiting Period</Label>
-                  <Input placeholder="e.g., 21 days" />
+                  <Input ref={formRefs.waitingPeriod} placeholder="21 days" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Survivability (%)</Label>
-                  <Input type="number" placeholder="96" />
+                  <Label>Survivability %</Label>
+                  <Input ref={formRefs.survivability} placeholder="96%" />
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.status.current) formRefs.status.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.status as any}>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="contaminated">Contaminated</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                <Button variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={() => setIsAddModalOpen(false)}>
-                  Save Record
+                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
+                  {editingId ? "Update" : "Save"} Record
                 </Button>
               </div>
             </DialogContent>
@@ -212,87 +256,69 @@ export function SecondaryHardening() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <StatsCard key={index} {...stat} />
         ))}
       </div>
 
-      {/* Survivability Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-6 bg-gradient-to-br from-white to-[#F3FFF4] border-border/50">
-          <h4 className="mb-2">Avg Survivability</h4>
-          <p className="text-[#555555]">93.8%</p>
-          <p className="text-sm text-[#4CAF50] mt-1">Above target (90%)</p>
-        </Card>
-        <Card className="p-6 bg-gradient-to-br from-white to-[#F3FFF4] border-border/50">
-          <h4 className="mb-2">Best Performer</h4>
-          <p className="text-[#555555]">Banana</p>
-          <p className="text-sm text-[#4CAF50] mt-1">96% avg survival</p>
-        </Card>
-        <Card className="p-6 bg-gradient-to-br from-white to-[#F3FFF4] border-border/50">
-          <h4 className="mb-2">Completion Rate</h4>
-          <p className="text-[#555555]">87%</p>
-          <p className="text-sm text-[#717182] mt-1">On schedule</p>
-        </Card>
-        <Card className="p-6 bg-gradient-to-br from-white to-[#F3FFF4] border-border/50">
-          <h4 className="mb-2">Avg Duration</h4>
-          <p className="text-[#555555]">26 days</p>
-          <p className="text-sm text-[#717182] mt-1">Per batch</p>
-        </Card>
-      </div>
-
-      {/* Main Table */}
       <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
         <div className="flex items-center justify-between mb-4">
+          <div className="flex gap-4 items-center">
+            <Input
+              placeholder="Search secondary hardening..."
+              className="max-w-xs"
+              value={searchTerm}
+              onChange={(e) => dispatch(setSearchTerm(e.target.value))}
+            />
+            <Select value={filterValue} onValueChange={(v) => setFilterValue(v as StatusType | "all")}>
+              <SelectTrigger className="max-w-xs">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="contaminated">Contaminated</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <h3>Secondary Hardening Register</h3>
-          <Input placeholder="Search batches..." className="max-w-xs" />
         </div>
         <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#F5F5F5]">
-                <TableHead>ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Batch Name</TableHead>
-                <TableHead>Crop</TableHead>
-                <TableHead>Tunnel</TableHead>
-                <TableHead>Bed</TableHead>
-                <TableHead>Row</TableHead>
-                <TableHead>Cavity</TableHead>
-                <TableHead>Plants</TableHead>
-                <TableHead>Workers</TableHead>
-                <TableHead>Waiting</TableHead>
-                <TableHead>Survival %</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="font-bold text-[#333333]">ID</TableHead>
+                <TableHead className="font-bold text-[#333333]">Batch Name</TableHead>
+                <TableHead className="font-bold text-[#333333]">Crop</TableHead>
+                <TableHead className="font-bold text-[#333333]">Tunnel</TableHead>
+                <TableHead className="font-bold text-[#333333]">Plants</TableHead>
+                <TableHead className="font-bold text-[#333333]">Survival %</TableHead>
+                <TableHead className="font-bold text-[#333333]">Status</TableHead>
+                <TableHead className="font-bold text-[#333333]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {secondaryData.map((row) => (
-                <TableRow key={row.id} className="hover:bg-[#F3FFF4] transition-colors">
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell>{row.date}</TableCell>
-                  <TableCell>{row.batchName}</TableCell>
-                  <TableCell>{row.crop}</TableCell>
-                  <TableCell>{row.tunnel}</TableCell>
-                  <TableCell>{row.bed}</TableCell>
-                  <TableCell>{row.row}</TableCell>
-                  <TableCell>{row.cavity}</TableCell>
-                  <TableCell>{row.plants}</TableCell>
-                  <TableCell>{row.workers}</TableCell>
-                  <TableCell>{row.waitingPeriod}</TableCell>
+              {filteredRecords.map((record) => (
+                <TableRow key={record.id} className="hover:bg-[#F3FFF4] transition-colors">
+                  <TableCell>{record.id}</TableCell>
+                  <TableCell>{record.batchName}</TableCell>
+                  <TableCell>{record.crop}</TableCell>
+                  <TableCell>{record.tunnel}</TableCell>
+                  <TableCell>{record.plants}</TableCell>
+                  <TableCell>{record.survivability}</TableCell>
                   <TableCell>
-                    <span className={parseInt(row.survivability) >= 90 ? "text-[#4CAF50]" : "text-[#FFC107]"}>
-                      {row.survivability}
-                    </span>
+                    <StatusBadge status={record.status} />
                   </TableCell>
-                  <TableCell>
-                    <StatusBadge status={row.status} />
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">Edit</Button>
+                  <TableCell className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(record)}>
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(record.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

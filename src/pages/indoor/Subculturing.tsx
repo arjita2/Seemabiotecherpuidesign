@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Filter, Download } from "lucide-react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { Plus, Filter, Download, Trash2, Edit2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
@@ -10,71 +10,122 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { StatusBadge, StatusType } from "../../components/common/StatusBadge";
 import { StatsCard } from "../../components/common/StatsCard";
 import { Microscope, Layers, Timer, AlertTriangle } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import {
+  addRecord,
+  updateRecord,
+  deleteRecord,
+  setSearchTerm,
+  setFilterStatus,
+  setEditingId,
+  type SubcultureRecord,
+} from "../../store/slices/subcultureSlice";
 
 export function Subculturing() {
+  const dispatch = useAppDispatch();
+  const { records, searchTerm, filterStatus, editingId } = useAppSelector((state) => state.subculture);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
+
+  const formRefs = {
+    id: useRef<HTMLInputElement>(null),
+    date: useRef<HTMLInputElement>(null),
+    sourceID: useRef<HTMLInputElement>(null),
+    crop: useRef<HTMLSelectElement>(null),
+    variety: useRef<HTMLInputElement>(null),
+    stage: useRef<HTMLSelectElement>(null),
+    explants: useRef<HTMLInputElement>(null),
+    mediaUsed: useRef<HTMLSelectElement>(null),
+    technician: useRef<HTMLInputElement>(null),
+    status: useRef<HTMLSelectElement>(null),
+  };
+
+  const [editingRecord, setEditingRecord] = useState<SubcultureRecord | null>(null);
 
   const stats = [
-    { title: "Total Cultures", value: "156", icon: Microscope, trend: { value: "+8% this week", isPositive: true } },
-    { title: "Active Subcultures", value: "42", icon: Layers },
-    { title: "Awaiting Transfer", value: "12", icon: Timer },
-    { title: "Contaminated", value: "3", icon: AlertTriangle },
+    { title: "Total Cultures", value: records.length.toString(), icon: Microscope, trend: { value: "+8% this week", isPositive: true } },
+    { title: "Active Subcultures", value: records.filter((r) => r.status === "active").length.toString(), icon: Layers },
+    { title: "Awaiting Transfer", value: records.filter((r) => r.status === "pending").length.toString(), icon: Timer },
+    { title: "Contaminated", value: records.filter((r) => r.status === "contaminated").length.toString(), icon: AlertTriangle },
   ];
 
-  const subcultureData = [
-    {
-      id: "SC-2024-001",
-      date: "2024-11-20",
-      sourceID: "MB-2024-001",
-      crop: "Banana",
-      variety: "Grand Naine",
-      stage: "Stage 1",
-      explants: 25,
-      mediaUsed: "MS Medium",
-      technician: "Sarah Lee",
-      status: "active" as StatusType,
-    },
-    {
-      id: "SC-2024-002",
-      date: "2024-11-21",
-      sourceID: "MB-2024-002",
-      crop: "Bamboo",
-      variety: "Dendrocalamus",
-      stage: "Stage 2",
-      explants: 30,
-      mediaUsed: "WPM Medium",
-      technician: "Mike Chen",
-      status: "completed" as StatusType,
-    },
-    {
-      id: "SC-2024-003",
-      date: "2024-11-22",
-      sourceID: "MB-2024-003",
-      crop: "Teak",
-      variety: "Tectona grandis",
-      stage: "Stage 1",
-      explants: 20,
-      mediaUsed: "MS Medium",
-      technician: "Sarah Lee",
-      status: "pending" as StatusType,
-    },
-    {
-      id: "SC-2024-004",
-      date: "2024-11-22",
-      sourceID: "MB-2024-004",
-      crop: "Ornamental",
-      variety: "Anthurium",
-      stage: "Stage 3",
-      explants: 15,
-      mediaUsed: "B5 Medium",
-      technician: "John Doe",
-      status: "contaminated" as StatusType,
-    },
-  ];
+  const filteredRecords = useMemo(() => {
+    return records.filter((record) => {
+      const matchesSearch = Object.values(record).some((val) =>
+        val?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      const matchesFilter = filterValue === "all" || record.status === filterValue;
+      return matchesSearch && matchesFilter;
+    });
+  }, [records, searchTerm, filterValue]);
+
+  const handleAdd = useCallback(() => {
+    const newRecord: SubcultureRecord = {
+      id: formRefs.id.current?.value || `SC-2024-${records.length + 1}`,
+      date: formRefs.date.current?.value || "",
+      sourceID: formRefs.sourceID.current?.value || "",
+      crop: formRefs.crop.current?.value || "",
+      variety: formRefs.variety.current?.value || "",
+      stage: formRefs.stage.current?.value || "",
+      explants: parseInt(formRefs.explants.current?.value || "0"),
+      mediaUsed: formRefs.mediaUsed.current?.value || "",
+      technician: formRefs.technician.current?.value || "",
+      status: (formRefs.status.current?.value || "pending") as StatusType,
+    };
+
+    if (editingId && editingRecord) {
+      dispatch(updateRecord({ ...newRecord, id: editingRecord.id }));
+      dispatch(setEditingId(null));
+      setEditingRecord(null);
+    } else {
+      dispatch(addRecord(newRecord));
+    }
+
+    setIsAddModalOpen(false);
+    Object.values(formRefs).forEach((ref) => {
+      if (ref.current) ref.current.value = "";
+    });
+  }, [dispatch, editingId, editingRecord, records.length]);
+
+  const handleEdit = useCallback((record: SubcultureRecord) => {
+    setEditingRecord(record);
+    dispatch(setEditingId(record.id));
+
+    setTimeout(() => {
+      if (formRefs.id.current) formRefs.id.current.value = record.id;
+      if (formRefs.date.current) formRefs.date.current.value = record.date;
+      if (formRefs.sourceID.current) formRefs.sourceID.current.value = record.sourceID;
+      if (formRefs.crop.current) formRefs.crop.current.value = record.crop;
+      if (formRefs.variety.current) formRefs.variety.current.value = record.variety;
+      if (formRefs.stage.current) formRefs.stage.current.value = record.stage;
+      if (formRefs.explants.current) formRefs.explants.current.value = record.explants.toString();
+      if (formRefs.mediaUsed.current) formRefs.mediaUsed.current.value = record.mediaUsed;
+      if (formRefs.technician.current) formRefs.technician.current.value = record.technician;
+      if (formRefs.status.current) formRefs.status.current.value = record.status;
+    }, 0);
+
+    setIsAddModalOpen(true);
+  }, [dispatch]);
+
+  const handleDelete = useCallback((id: string) => {
+    dispatch(deleteRecord(id));
+  }, [dispatch]);
+
+  const handleCloseModal = useCallback(() => {
+    setIsAddModalOpen(false);
+    dispatch(setEditingId(null));
+    setEditingRecord(null);
+    Object.values(formRefs).forEach((ref) => {
+      if (ref.current) ref.current.value = "";
+    });
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(setFilterStatus(filterValue));
+  }, [filterValue, dispatch]);
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1>Subculturing</h1>
@@ -98,25 +149,25 @@ export function Subculturing() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Add New Subculture Record</DialogTitle>
+                <DialogTitle>{editingId ? "Edit Subculture Record" : "Add New Subculture Record"}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-4 py-4">
                 <div className="space-y-2">
                   <Label>Subculture ID</Label>
-                  <Input placeholder="SC-2024-XXX" />
+                  <Input ref={formRefs.id} placeholder="SC-2024-XXX" />
                 </div>
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input type="date" />
+                  <Input ref={formRefs.date} type="date" />
                 </div>
                 <div className="space-y-2">
                   <Label>Source ID</Label>
-                  <Input placeholder="MB-2024-XXX" />
+                  <Input ref={formRefs.sourceID} placeholder="MB-2024-XXX" />
                 </div>
                 <div className="space-y-2">
                   <Label>Crop Type</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.crop as any}>
                       <SelectValue placeholder="Select crop" />
                     </SelectTrigger>
                     <SelectContent>
@@ -129,62 +180,63 @@ export function Subculturing() {
                 </div>
                 <div className="space-y-2">
                   <Label>Variety</Label>
-                  <Input placeholder="Enter variety" />
+                  <Input ref={formRefs.variety} placeholder="Enter variety" />
                 </div>
                 <div className="space-y-2">
                   <Label>Stage</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.stage.current) formRefs.stage.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.stage as any}>
                       <SelectValue placeholder="Select stage" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="stage1">Stage 1</SelectItem>
-                      <SelectItem value="stage2">Stage 2</SelectItem>
-                      <SelectItem value="stage3">Stage 3</SelectItem>
+                      <SelectItem value="Stage 1">Stage 1</SelectItem>
+                      <SelectItem value="Stage 2">Stage 2</SelectItem>
+                      <SelectItem value="Stage 3">Stage 3</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Number of Explants</Label>
-                  <Input type="number" placeholder="25" />
+                  <Input ref={formRefs.explants} type="number" placeholder="25" />
                 </div>
                 <div className="space-y-2">
                   <Label>Media Used</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.mediaUsed.current) formRefs.mediaUsed.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.mediaUsed as any}>
                       <SelectValue placeholder="Select media" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ms">MS Medium</SelectItem>
-                      <SelectItem value="wpm">WPM Medium</SelectItem>
-                      <SelectItem value="b5">B5 Medium</SelectItem>
+                      <SelectItem value="MS Medium">MS Medium</SelectItem>
+                      <SelectItem value="WPM Medium">WPM Medium</SelectItem>
+                      <SelectItem value="B5 Medium">B5 Medium</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Technician</Label>
-                  <Input placeholder="Technician name" />
+                  <Input ref={formRefs.technician} placeholder="Technician name" />
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select>
-                    <SelectTrigger>
+                  <Select onValueChange={(v) => { if (formRefs.status.current) formRefs.status.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.status as any}>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="contaminated">Contaminated</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                <Button variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={() => setIsAddModalOpen(false)}>
-                  Save Record
+                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
+                  {editingId ? "Update" : "Save"} Record
                 </Button>
               </div>
             </DialogContent>
@@ -192,53 +244,69 @@ export function Subculturing() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <StatsCard key={index} {...stat} />
         ))}
       </div>
 
-      {/* Main Table */}
       <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
         <div className="flex items-center justify-between mb-4">
-          <h3>Subculture Register</h3>
-          <Input placeholder="Search subcultures..." className="max-w-xs" />
+          <div className="flex gap-4 items-center">
+            <Input
+              placeholder="Search subcultures..."
+              className="max-w-xs"
+              value={searchTerm}
+              onChange={(e) => dispatch(setSearchTerm(e.target.value))}
+            />
+            <Select value={filterValue} onValueChange={(v) => setFilterValue(v as StatusType | "all")}>
+              <SelectTrigger className="max-w-xs">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="contaminated">Contaminated</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <h3>Subculturing Register</h3>
         </div>
         <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#F5F5F5]">
-                <TableHead>Subculture ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Source ID</TableHead>
-                <TableHead>Crop</TableHead>
-                <TableHead>Variety</TableHead>
-                <TableHead>Stage</TableHead>
-                <TableHead>Explants</TableHead>
-                <TableHead>Media</TableHead>
-                <TableHead>Technician</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="font-bold text-[#333333]">ID</TableHead>
+                <TableHead className="font-bold text-[#333333]">Date</TableHead>
+                <TableHead className="font-bold text-[#333333]">Crop</TableHead>
+                <TableHead className="font-bold text-[#333333]">Stage</TableHead>
+                <TableHead className="font-bold text-[#333333]">Explants</TableHead>
+                <TableHead className="font-bold text-[#333333]">Technician</TableHead>
+                <TableHead className="font-bold text-[#333333]">Status</TableHead>
+                <TableHead className="font-bold text-[#333333]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {subcultureData.map((row) => (
-                <TableRow key={row.id} className="hover:bg-[#F3FFF4] transition-colors">
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell>{row.date}</TableCell>
-                  <TableCell>{row.sourceID}</TableCell>
-                  <TableCell>{row.crop}</TableCell>
-                  <TableCell>{row.variety}</TableCell>
-                  <TableCell>{row.stage}</TableCell>
-                  <TableCell>{row.explants}</TableCell>
-                  <TableCell>{row.mediaUsed}</TableCell>
-                  <TableCell>{row.technician}</TableCell>
+              {filteredRecords.map((record) => (
+                <TableRow key={record.id} className="hover:bg-[#F3FFF4] transition-colors">
+                  <TableCell>{record.id}</TableCell>
+                  <TableCell>{record.date}</TableCell>
+                  <TableCell>{record.crop}</TableCell>
+                  <TableCell>{record.stage}</TableCell>
+                  <TableCell>{record.explants}</TableCell>
+                  <TableCell>{record.technician}</TableCell>
                   <TableCell>
-                    <StatusBadge status={row.status} />
+                    <StatusBadge status={record.status} />
                   </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">Edit</Button>
+                  <TableCell className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(record)}>
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(record.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -246,25 +314,6 @@ export function Subculturing() {
           </Table>
         </div>
       </Card>
-
-      {/* Stage Distribution */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
-          <h4 className="mb-2">Stage 1</h4>
-          <p className="text-[#555555]">45 cultures</p>
-          <p className="text-sm text-[#717182] mt-1">Initial establishment</p>
-        </Card>
-        <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
-          <h4 className="mb-2">Stage 2</h4>
-          <p className="text-[#555555]">68 cultures</p>
-          <p className="text-sm text-[#717182] mt-1">Multiplication phase</p>
-        </Card>
-        <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
-          <h4 className="mb-2">Stage 3</h4>
-          <p className="text-[#555555]">43 cultures</p>
-          <p className="text-sm text-[#717182] mt-1">Pre-hardening</p>
-        </Card>
-      </div>
     </div>
   );
 }

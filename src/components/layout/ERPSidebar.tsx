@@ -37,15 +37,15 @@ export function ERPSidebar({ isCollapsed, onToggle }: ERPSidebarProps) {
       <div className="p-6 border-b border-border/50 flex items-center justify-between">
         {!isCollapsed && (
           <div>
-            <h2 className="text-[#4CAF50]">Seema Biotech</h2>
-            <p className="text-sm text-[#717182]">ERP System</p>
+            <h2 className="text-[#4CAF50] text-[18px] font-semibold">Seema Biotech</h2>
+            <p className="text-[14px] text-[#717182]">ERP System</p>
           </div>
         )}
         <Button
           variant="ghost"
           size="sm"
           onClick={onToggle}
-          className="hover:bg-[#F3FFF4]"
+          className="hover:bg-[#E8F5E9] hover:text-[#2E7D32]"
         >
           {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
         </Button>
@@ -58,10 +58,10 @@ export function ERPSidebar({ isCollapsed, onToggle }: ERPSidebarProps) {
           <CollapsibleTrigger asChild>
             <Button
               variant="ghost"
-              className={`w-full justify-start hover:bg-[#F3FFF4] ${isCollapsed ? "px-3" : ""}`}
+              className={`w-full justify-start hover:bg-[#E8F5E9] hover:text-[#2E7D32] ${isCollapsed ? "px-3" : ""}`}
             >
               <Layers className={`w-5 h-5 text-[#4CAF50] ${isCollapsed ? "" : "mr-3"}`} />
-              {!isCollapsed && <span>Indoor Module</span>}
+              {!isCollapsed && <span className="text-[15px]">Indoor Module</span>}
             </Button>
           </CollapsibleTrigger>
           {!isCollapsed && (
@@ -72,10 +72,10 @@ export function ERPSidebar({ isCollapsed, onToggle }: ERPSidebarProps) {
                   <Link key={link.path} to={link.path}>
                     <Button
                       variant="ghost"
-                      className={`w-full justify-start ${isActive(link.path) ? "bg-[#F3FFF4] text-[#4CAF50]" : "hover:bg-[#F3FFF4]"}`}
+                      className={`w-full justify-start ${isActive(link.path) ? "bg-[#E8F5E9] text-[#2E7D32]" : "hover:bg-[#E8F5E9] hover:text-[#2E7D32]"}`}
                     >
                       <Icon className={`w-4 h-4 ${isActive(link.path) ? "text-[#4CAF50]" : ""} mr-3`} />
-                      <span>{link.label}</span>
+                      <span className="text-[15px]">{link.label}</span>
                     </Button>
                   </Link>
                 );
@@ -89,10 +89,10 @@ export function ERPSidebar({ isCollapsed, onToggle }: ERPSidebarProps) {
           <CollapsibleTrigger asChild>
             <Button
               variant="ghost"
-              className={`w-full justify-start hover:bg-[#F3FFF4] ${isCollapsed ? "px-3" : ""}`}
+              className={`w-full justify-start hover:bg-[#E8F5E9] hover:text-[#2E7D32] ${isCollapsed ? "px-3" : ""}`}
             >
               <Sprout className={`w-5 h-5 text-[#4CAF50] ${isCollapsed ? "" : "mr-3"}`} />
-              {!isCollapsed && <span>Outdoor Module</span>}
+              {!isCollapsed && <span className="text-[15px]">Outdoor Module</span>}
             </Button>
           </CollapsibleTrigger>
           {!isCollapsed && (
@@ -103,10 +103,10 @@ export function ERPSidebar({ isCollapsed, onToggle }: ERPSidebarProps) {
                   <Link key={link.path} to={link.path}>
                     <Button
                       variant="ghost"
-                      className={`w-full justify-start ${isActive(link.path) ? "bg-[#F3FFF4] text-[#4CAF50]" : "hover:bg-[#F3FFF4]"}`}
+                      className={`w-full justify-start ${isActive(link.path) ? "bg-[#E8F5E9] text-[#2E7D32]" : "hover:bg-[#E8F5E9] hover:text-[#2E7D32]"}`}
                     >
                       <Icon className={`w-4 h-4 ${isActive(link.path) ? "text-[#4CAF50]" : ""} mr-3`} />
-                      <span>{link.label}</span>
+                      <span className="text-[15px]">{link.label}</span>
                     </Button>
                   </Link>
                 );
@@ -124,8 +124,8 @@ export function ERPSidebar({ isCollapsed, onToggle }: ERPSidebarProps) {
               <User className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-sm">Admin User</p>
-              <p className="text-xs text-[#717182]">admin@seema.bio</p>
+              <p className="text-[15px] font-medium">Admin User</p>
+              <p className="text-[13px] text-[#717182]">admin@seema.bio</p>
             </div>
           </div>
         </div>

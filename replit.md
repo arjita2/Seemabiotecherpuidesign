@@ -58,6 +58,14 @@ src/
 - `/outdoor/sampling` - Outdoor Sampling
 
 ## Recent Changes
+- 2025-11-23: UI Improvements
+  - Changed default route to Media Preparation (instead of Dashboard)
+  - Improved sidebar hover effects with better color contrast
+  - Changed hover color from #F3FFF4 to #E8F5E9 (darker green)
+  - Changed hover text color to #2E7D32 (dark green) for visibility
+  - Increased font sizes across the application by 1-2px
+  - Enhanced sidebar text readability with larger fonts (15px for navigation items)
+  
 - 2025-11-23: Initial setup in Replit environment
   - Added TypeScript configuration
   - Added Tailwind CSS configuration

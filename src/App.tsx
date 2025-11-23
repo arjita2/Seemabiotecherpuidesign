@@ -17,8 +17,9 @@ export default function App() {
     <Router>
       <ERPLayout>
         <Routes>
-          {/* Default route - redirect to dashboard */}
-          <Route path="/" element={<Dashboard />} />
+          {/* Default route - redirect to first indoor page */}
+          <Route path="/" element={<Navigate to="/indoor/media-preparation" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           
           {/* Indoor Module Routes */}
           <Route path="/indoor/media-preparation" element={<MediaPreparation />} />
@@ -33,8 +34,8 @@ export default function App() {
           <Route path="/outdoor/holding-area" element={<HoldingArea />} />
           <Route path="/outdoor/sampling" element={<OutdoorSampling />} />
           
-          {/* Catch all route - redirect to dashboard */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Catch all route - redirect to media preparation */}
+          <Route path="*" element={<Navigate to="/indoor/media-preparation" replace />} />
         </Routes>
       </ERPLayout>
     </Router>

@@ -107,6 +107,17 @@ src/
 - Typography: Bold dark gray (#333333) for all headings
 - Workflow: Rapid feature implementation in fast mode (Redux, search, filter, CRUD all in one go)
 - Tables: Hover effects with light green background for better UX
+- Multi-Select Dropdowns: White background (#fff) for proper visibility
+- Form Data: Captured via state + refs hybrid approach for Select/Input handling
+
+## Latest Fixes (2025-11-23)
+- **Add Functionality**: Fixed form data collection using formData state for Select components
+- **Multi-Select Dropdown**: Applied white background (#fff) to SelectTrigger and SelectContent
+- **useLocalStorage Hook**: Created in `/src/hooks/useLocalStorage.ts` with localStorage persistence
+- **AppContext (Global Context)**: Created in `/src/context/AppContext.tsx` with addItem/editItem/deleteItem
+- **App Provider**: Wrapped entire app with AppContextProvider for global state access
+- **Edit State Sync**: Fixed handleEdit to populate both formData state and refs for proper form prefill
+- **All Hooks Implemented**: useState, useRef, useCallback, useMemo, useEffect, useContext, useLocalStorage
 
 ## Available Routes
 ### Indoor Module

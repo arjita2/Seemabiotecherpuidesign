@@ -40,6 +40,13 @@ export function Subculturing() {
     status: useRef<HTMLSelectElement>(null),
   };
 
+  const [formData, setFormData] = useState({
+    crop: "",
+    stage: "",
+    mediaUsed: "",
+    status: "",
+  });
+
   const [editingRecord, setEditingRecord] = useState<SubcultureRecord | null>(null);
 
   const stats = [
@@ -64,13 +71,13 @@ export function Subculturing() {
       id: formRefs.id.current?.value || `SC-2024-${records.length + 1}`,
       date: formRefs.date.current?.value || "",
       sourceID: formRefs.sourceID.current?.value || "",
-      crop: formRefs.crop.current?.value || "",
+      crop: formData.crop || "",
       variety: formRefs.variety.current?.value || "",
-      stage: formRefs.stage.current?.value || "",
+      stage: formData.stage || "",
       explants: parseInt(formRefs.explants.current?.value || "0"),
-      mediaUsed: formRefs.mediaUsed.current?.value || "",
+      mediaUsed: formData.mediaUsed || "",
       technician: formRefs.technician.current?.value || "",
-      status: (formRefs.status.current?.value || "pending") as StatusType,
+      status: (formData.status || "pending") as StatusType,
     };
 
     if (editingId && editingRecord) {
@@ -85,11 +92,18 @@ export function Subculturing() {
     Object.values(formRefs).forEach((ref) => {
       if (ref.current) ref.current.value = "";
     });
-  }, [dispatch, editingId, editingRecord, records.length]);
+    setFormData({ crop: "", stage: "", mediaUsed: "", status: "" });
+  }, [dispatch, editingId, editingRecord, records.length, formData]);
 
   const handleEdit = useCallback((record: SubcultureRecord) => {
     setEditingRecord(record);
     dispatch(setEditingId(record.id));
+    setFormData({
+      crop: record.crop,
+      stage: record.stage,
+      mediaUsed: record.mediaUsed,
+      status: record.status,
+    });
 
     setTimeout(() => {
       if (formRefs.id.current) formRefs.id.current.value = record.id;
@@ -118,6 +132,7 @@ export function Subculturing() {
     Object.values(formRefs).forEach((ref) => {
       if (ref.current) ref.current.value = "";
     });
+    setFormData({ crop: "", stage: "", mediaUsed: "", status: "" });
   }, [dispatch]);
 
   useEffect(() => {
@@ -166,11 +181,11 @@ export function Subculturing() {
                 </div>
                 <div className="space-y-2">
                   <Label>Crop Type</Label>
-                  <Select onValueChange={(v) => { if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.crop as any}>
+                  <Select value={formData.crop} onValueChange={(v) => { setFormData(prev => ({ ...prev, crop: v })); if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.crop as any} className="bg-white">
                       <SelectValue placeholder="Select crop" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="banana">Banana</SelectItem>
                       <SelectItem value="bamboo">Bamboo</SelectItem>
                       <SelectItem value="teak">Teak</SelectItem>
@@ -184,11 +199,11 @@ export function Subculturing() {
                 </div>
                 <div className="space-y-2">
                   <Label>Stage</Label>
-                  <Select onValueChange={(v) => { if (formRefs.stage.current) formRefs.stage.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.stage as any}>
+                  <Select value={formData.stage} onValueChange={(v) => { setFormData(prev => ({ ...prev, stage: v })); if (formRefs.stage.current) formRefs.stage.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.stage as any} className="bg-white">
                       <SelectValue placeholder="Select stage" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Stage 1">Stage 1</SelectItem>
                       <SelectItem value="Stage 2">Stage 2</SelectItem>
                       <SelectItem value="Stage 3">Stage 3</SelectItem>
@@ -201,11 +216,11 @@ export function Subculturing() {
                 </div>
                 <div className="space-y-2">
                   <Label>Media Used</Label>
-                  <Select onValueChange={(v) => { if (formRefs.mediaUsed.current) formRefs.mediaUsed.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.mediaUsed as any}>
+                  <Select value={formData.mediaUsed} onValueChange={(v) => { setFormData(prev => ({ ...prev, mediaUsed: v })); if (formRefs.mediaUsed.current) formRefs.mediaUsed.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.mediaUsed as any} className="bg-white">
                       <SelectValue placeholder="Select media" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="MS Medium">MS Medium</SelectItem>
                       <SelectItem value="WPM Medium">WPM Medium</SelectItem>
                       <SelectItem value="B5 Medium">B5 Medium</SelectItem>
@@ -218,11 +233,11 @@ export function Subculturing() {
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select onValueChange={(v) => { if (formRefs.status.current) formRefs.status.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.status as any}>
+                  <Select value={formData.status} onValueChange={(v) => { setFormData(prev => ({ ...prev, status: v })); if (formRefs.status.current) formRefs.status.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.status as any} className="bg-white">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>

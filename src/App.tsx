@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ERPLayout } from "./components/layout/ERPLayout";
+import { AppContextProvider } from "./context/AppContext";
 import { Dashboard } from "./pages/Dashboard";
 import { MediaPreparation } from "./pages/indoor/MediaPreparation";
 import { Subculturing } from "./pages/indoor/Subculturing";
@@ -14,9 +15,10 @@ import "./styles/globals.css";
 
 export default function App() {
   return (
-    <Router>
-      <ERPLayout>
-        <Routes>
+    <AppContextProvider>
+      <Router>
+        <ERPLayout>
+          <Routes>
           {/* Default route - redirect to first indoor page */}
           <Route path="/" element={<Navigate to="/indoor/media-preparation" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -36,8 +38,9 @@ export default function App() {
           
           {/* Catch all route - redirect to media preparation */}
           <Route path="*" element={<Navigate to="/indoor/media-preparation" replace />} />
-        </Routes>
-      </ERPLayout>
-    </Router>
+          </Routes>
+        </ERPLayout>
+      </Router>
+    </AppContextProvider>
   );
 }

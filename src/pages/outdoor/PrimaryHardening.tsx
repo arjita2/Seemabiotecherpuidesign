@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Filter, Download, Grid3x3 } from "lucide-react";
+import { Plus, Filter, Download } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
@@ -13,7 +13,6 @@ import { Sprout, CheckCircle, Clock, MapPin } from "lucide-react";
 
 export function PrimaryHardening() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
   const stats = [
     { title: "Active Batches", value: "32", icon: Sprout, trend: { value: "+6 this week", isPositive: true } },
@@ -94,14 +93,6 @@ export function PrimaryHardening() {
           <p className="text-[#717182] mt-1">Manage plant acclimatization in controlled tunnels</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => setViewMode(viewMode === "table" ? "grid" : "table")}
-          >
-            <Grid3x3 className="w-4 h-4" />
-            {viewMode === "table" ? "Grid View" : "Table View"}
-          </Button>
           <Button variant="outline" className="gap-2">
             <Filter className="w-4 h-4" />
             Filter
@@ -213,40 +204,8 @@ export function PrimaryHardening() {
         ))}
       </div>
 
-      {/* Grid View - Tunnel/Bed Layout */}
-      {viewMode === "grid" && (
-        <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
-          <h3 className="mb-4">Tunnel & Bed Occupancy</h3>
-          <div className="space-y-6">
-            {tunnels.map((tunnel) => (
-              <div key={tunnel}>
-                <h4 className="mb-3">{tunnel}</h4>
-                <div className="grid grid-cols-5 gap-3">
-                  {beds.map((bed) => {
-                    const isOccupied = Math.random() > 0.4; // Mock occupancy
-                    return (
-                      <Card
-                        key={bed}
-                        className={`p-4 text-center cursor-pointer transition-all hover:scale-105 ${
-                          isOccupied
-                            ? "bg-gradient-to-br from-[#4CAF50]/20 to-[#4CAF50]/10 border-[#4CAF50]/30"
-                            : "bg-gray-50 border-gray-200"
-                        }`}
-                      >
-                        <p className={isOccupied ? "text-[#4CAF50]" : "text-gray-400"}>{bed}</p>
-                        <p className="text-xs mt-1">{isOccupied ? "Occupied" : "Available"}</p>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
       {/* Table View */}
-      {viewMode === "table" && (
+      {(
         <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
           <div className="flex items-center justify-between mb-4">
             <h3>Primary Hardening Register</h3>

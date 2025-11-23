@@ -30,9 +30,9 @@ export function MediaPreparation() {
   ];
 
   const mediaBatchData = [
-    { id: "MB-2024-001", prepDate: "2024-11-18", mediaType: "MS Medium", quantity: "5L", pH: "5.8", preparedBy: "John Doe", status: "completed" as StatusType },
-    { id: "MB-2024-002", prepDate: "2024-11-19", mediaType: "WPM Medium", quantity: "3L", pH: "5.7", preparedBy: "Jane Smith", status: "active" as StatusType },
-    { id: "MB-2024-003", prepDate: "2024-11-20", mediaType: "MS Medium", quantity: "4L", pH: "5.8", preparedBy: "Mike Johnson", status: "pending" as StatusType },
+    { id: "MB-2024-001", prepDate: "2024-11-18", mediaType: "MS Medium", quantity: "5L", pH: "5.8", preparedBy: "Rajesh Kumar", status: "completed" as StatusType },
+    { id: "MB-2024-002", prepDate: "2024-11-19", mediaType: "WPM Medium", quantity: "3L", pH: "5.7", preparedBy: "Priya Sharma", status: "active" as StatusType },
+    { id: "MB-2024-003", prepDate: "2024-11-20", mediaType: "MS Medium", quantity: "4L", pH: "5.8", preparedBy: "Amit Patel", status: "pending" as StatusType },
   ];
 
   return (
@@ -132,11 +132,21 @@ export function MediaPreparation() {
       </div>
 
       {/* Tabs for Different Registers */}
-      <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
+      <Card className="p-6 bg-white border-border/50">
         <Tabs defaultValue="autoclave" className="space-y-4">
-          <TabsList className="bg-[#F5F5F5]">
-            <TabsTrigger value="autoclave">Autoclave Register</TabsTrigger>
-            <TabsTrigger value="media">Media Batch Register</TabsTrigger>
+          <TabsList className="bg-transparent p-0 gap-2">
+            <TabsTrigger 
+              value="autoclave" 
+              className="data-[state=active]:bg-[#333333] data-[state=active]:text-white data-[state=inactive]:bg-[#F5F5F5] data-[state=inactive]:text-[#555555] px-6 py-2 rounded-md font-medium"
+            >
+              Autoclave Register
+            </TabsTrigger>
+            <TabsTrigger 
+              value="media"
+              className="data-[state=active]:bg-[#333333] data-[state=active]:text-white data-[state=inactive]:bg-[#F5F5F5] data-[state=inactive]:text-[#555555] px-6 py-2 rounded-md font-medium"
+            >
+              Media Batch Register
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="autoclave" className="space-y-4">
@@ -148,14 +158,14 @@ export function MediaPreparation() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-[#F5F5F5]">
-                    <TableHead>Autoclave ID</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Batch No.</TableHead>
-                    <TableHead>Temperature</TableHead>
-                    <TableHead>Pressure</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Autoclave ID</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Date</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Batch No.</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Temperature</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Pressure</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Duration</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Status</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -189,14 +199,14 @@ export function MediaPreparation() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-[#F5F5F5]">
-                    <TableHead>Batch ID</TableHead>
-                    <TableHead>Prep Date</TableHead>
-                    <TableHead>Media Type</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>pH</TableHead>
-                    <TableHead>Prepared By</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Batch ID</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Prep Date</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Media Type</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Quantity</TableHead>
+                    <TableHead className="font-bold text-[#333333]">pH</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Prepared By</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Status</TableHead>
+                    <TableHead className="font-bold text-[#333333]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -223,24 +233,79 @@ export function MediaPreparation() {
         </Tabs>
       </Card>
 
-      {/* Summary Panel */}
-      <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
-        <h3 className="mb-4">Recent Activity</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-[#F3FFF4] rounded-lg">
-            <div>
-              <p>Media batch MB-2024-002 autoclaved</p>
-              <p className="text-sm text-[#717182]">2 hours ago</p>
-            </div>
-            <StatusBadge status="completed" />
-          </div>
-          <div className="flex items-center justify-between p-3 bg-[#F3FFF4] rounded-lg">
-            <div>
-              <p>New batch MB-2024-003 prepared</p>
-              <p className="text-sm text-[#717182]">4 hours ago</p>
-            </div>
-            <StatusBadge status="active" />
-          </div>
+      {/* 8-Stage Tissue Culture Workflow */}
+      <Card className="p-6 bg-white border-border/50">
+        <h3 className="mb-4">8-Stage Tissue Culture Workflow</h3>
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#F5F5F5]">
+                <TableHead className="font-bold text-[#333333]">Stage</TableHead>
+                <TableHead className="font-bold text-[#333333]">Process</TableHead>
+                <TableHead className="font-bold text-[#333333]">Duration</TableHead>
+                <TableHead className="font-bold text-[#333333]">Operator</TableHead>
+                <TableHead className="font-bold text-[#333333]">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
+                <TableCell className="font-medium">Stage 1</TableCell>
+                <TableCell>Mother Plant Selection</TableCell>
+                <TableCell>2 days</TableCell>
+                <TableCell>Rajesh Kumar</TableCell>
+                <TableCell><StatusBadge status="completed" /></TableCell>
+              </TableRow>
+              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
+                <TableCell className="font-medium">Stage 2</TableCell>
+                <TableCell>Explant Preparation</TableCell>
+                <TableCell>1 day</TableCell>
+                <TableCell>Priya Sharma</TableCell>
+                <TableCell><StatusBadge status="completed" /></TableCell>
+              </TableRow>
+              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
+                <TableCell className="font-medium">Stage 3</TableCell>
+                <TableCell>Surface Sterilization</TableCell>
+                <TableCell>3 hours</TableCell>
+                <TableCell>Amit Patel</TableCell>
+                <TableCell><StatusBadge status="completed" /></TableCell>
+              </TableRow>
+              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
+                <TableCell className="font-medium">Stage 4</TableCell>
+                <TableCell>Inoculation</TableCell>
+                <TableCell>1 day</TableCell>
+                <TableCell>Sunita Verma</TableCell>
+                <TableCell><StatusBadge status="active" /></TableCell>
+              </TableRow>
+              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
+                <TableCell className="font-medium">Stage 5</TableCell>
+                <TableCell>Multiplication</TableCell>
+                <TableCell>21 days</TableCell>
+                <TableCell>Vikram Singh</TableCell>
+                <TableCell><StatusBadge status="pending" /></TableCell>
+              </TableRow>
+              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
+                <TableCell className="font-medium">Stage 6</TableCell>
+                <TableCell>Rooting</TableCell>
+                <TableCell>14 days</TableCell>
+                <TableCell>Anjali Reddy</TableCell>
+                <TableCell><StatusBadge status="pending" /></TableCell>
+              </TableRow>
+              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
+                <TableCell className="font-medium">Stage 7</TableCell>
+                <TableCell>Acclimatization</TableCell>
+                <TableCell>10 days</TableCell>
+                <TableCell>Deepak Gupta</TableCell>
+                <TableCell><StatusBadge status="pending" /></TableCell>
+              </TableRow>
+              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
+                <TableCell className="font-medium">Stage 8</TableCell>
+                <TableCell>Hardening & Transfer</TableCell>
+                <TableCell>7 days</TableCell>
+                <TableCell>Meena Iyer</TableCell>
+                <TableCell><StatusBadge status="pending" /></TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       </Card>
     </div>

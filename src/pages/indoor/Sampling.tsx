@@ -31,6 +31,8 @@ export function Sampling() {
       testType: "Contamination",
       result: "Negative",
       testedBy: "Lab Tech A",
+      govVerified: "Yes",
+      certNumber: "CERT-2024-001",
       remarks: "Clear, no growth",
       status: "completed" as StatusType,
     },
@@ -162,6 +164,26 @@ export function Sampling() {
                   <Label>Remarks</Label>
                   <Textarea placeholder="Enter remarks" rows={3} />
                 </div>
+                <div className="space-y-2">
+                  <Label>Verified by Government</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select verification status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Certificate Number</Label>
+                  <Input placeholder="Enter certificate number" />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label>Reason (if not verified)</Label>
+                  <Input placeholder="Enter reason for non-verification" />
+                </div>
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
@@ -217,16 +239,16 @@ export function Sampling() {
           <Table>
             <TableHeader>
               <TableRow className="bg-[#F5F5F5]">
-                <TableHead>Sample ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Batch ID</TableHead>
-                <TableHead>Sample Type</TableHead>
-                <TableHead>Test Type</TableHead>
-                <TableHead>Result</TableHead>
-                <TableHead>Tested By</TableHead>
-                <TableHead>Remarks</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="font-bold text-[#333333]">Sample ID</TableHead>
+                <TableHead className="font-bold text-[#333333]">Date</TableHead>
+                <TableHead className="font-bold text-[#333333]">Batch ID</TableHead>
+                <TableHead className="font-bold text-[#333333]">Sample Type</TableHead>
+                <TableHead className="font-bold text-[#333333]">Test Type</TableHead>
+                <TableHead className="font-bold text-[#333333]">Result</TableHead>
+                <TableHead className="font-bold text-[#333333]">Tested By</TableHead>
+                <TableHead className="font-bold text-[#333333]">Gov. Verified</TableHead>
+                <TableHead className="font-bold text-[#333333]">Status</TableHead>
+                <TableHead className="font-bold text-[#333333]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -239,7 +261,7 @@ export function Sampling() {
                   <TableCell>{row.testType}</TableCell>
                   <TableCell>{row.result}</TableCell>
                   <TableCell>{row.testedBy}</TableCell>
-                  <TableCell>{row.remarks}</TableCell>
+                  <TableCell>{row.govVerified || "N/A"}</TableCell>
                   <TableCell>
                     <StatusBadge status={row.status} />
                   </TableCell>

@@ -11,7 +11,6 @@ import { Textarea } from "../../components/ui/textarea";
 import { StatusBadge, StatusType } from "../../components/common/StatusBadge";
 import { StatsCard } from "../../components/common/StatsCard";
 import { Droplets, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 export function Mortality() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -78,13 +77,6 @@ export function Mortality() {
     },
   ];
 
-  const chartData = [
-    { month: "Jul", mortality: 4.2 },
-    { month: "Aug", mortality: 3.8 },
-    { month: "Sep", mortality: 3.5 },
-    { month: "Oct", mortality: 3.0 },
-    { month: "Nov", mortality: 3.2 },
-  ];
 
   return (
     <div className="space-y-6">
@@ -209,27 +201,6 @@ export function Mortality() {
           <StatsCard key={index} {...stat} />
         ))}
       </div>
-
-      {/* Mortality Trend Chart */}
-      <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
-        <h3 className="mb-4">Mortality Rate Trend</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
-            <XAxis dataKey="month" stroke="#555555" />
-            <YAxis stroke="#555555" />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: "white", 
-                border: "1px solid #E0E0E0",
-                borderRadius: "8px" 
-              }} 
-            />
-            <Legend />
-            <Bar dataKey="mortality" fill="#4CAF50" name="Mortality Rate (%)" />
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
 
       {/* Crop-wise Mortality */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

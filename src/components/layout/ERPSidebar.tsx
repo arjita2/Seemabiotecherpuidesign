@@ -64,24 +64,22 @@ export function ERPSidebar({ isCollapsed, onToggle }: ERPSidebarProps) {
               {!isCollapsed && <span className="text-[15px]">Indoor Module</span>}
             </Button>
           </CollapsibleTrigger>
-          {!isCollapsed && (
-            <CollapsibleContent className="ml-2 mt-1 space-y-1">
-              {indoorLinks.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link key={link.path} to={link.path}>
-                    <Button
-                      variant="ghost"
-                      className={`w-full justify-start ${isActive(link.path) ? "bg-[#E8F5E9] text-[#2E7D32]" : "hover:bg-[#E8F5E9] hover:text-[#2E7D32]"}`}
-                    >
-                      <Icon className={`w-4 h-4 ${isActive(link.path) ? "text-[#4CAF50]" : ""} mr-3`} />
-                      <span className="text-[15px]">{link.label}</span>
-                    </Button>
-                  </Link>
-                );
-              })}
-            </CollapsibleContent>
-          )}
+          <CollapsibleContent className="ml-2 mt-1 space-y-1">
+            {indoorLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link key={link.path} to={link.path}>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start ${isActive(link.path) ? "bg-[#E8F5E9] text-[#2E7D32]" : "hover:bg-[#E8F5E9] hover:text-[#2E7D32]"} ${isCollapsed ? "px-3" : ""}`}
+                  >
+                    <Icon className={`w-4 h-4 ${isActive(link.path) ? "text-[#4CAF50]" : ""} ${isCollapsed ? "" : "mr-3"}`} />
+                    {!isCollapsed && <span className="text-[15px]">{link.label}</span>}
+                  </Button>
+                </Link>
+              );
+            })}
+          </CollapsibleContent>
         </Collapsible>
 
         {/* Outdoor Module */}
@@ -95,24 +93,22 @@ export function ERPSidebar({ isCollapsed, onToggle }: ERPSidebarProps) {
               {!isCollapsed && <span className="text-[15px]">Outdoor Module</span>}
             </Button>
           </CollapsibleTrigger>
-          {!isCollapsed && (
-            <CollapsibleContent className="ml-2 mt-1 space-y-1">
-              {outdoorLinks.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link key={link.path} to={link.path}>
-                    <Button
-                      variant="ghost"
-                      className={`w-full justify-start ${isActive(link.path) ? "bg-[#E8F5E9] text-[#2E7D32]" : "hover:bg-[#E8F5E9] hover:text-[#2E7D32]"}`}
-                    >
-                      <Icon className={`w-4 h-4 ${isActive(link.path) ? "text-[#4CAF50]" : ""} mr-3`} />
-                      <span className="text-[15px]">{link.label}</span>
-                    </Button>
-                  </Link>
-                );
-              })}
-            </CollapsibleContent>
-          )}
+          <CollapsibleContent className="ml-2 mt-1 space-y-1">
+            {outdoorLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link key={link.path} to={link.path}>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start ${isActive(link.path) ? "bg-[#E8F5E9] text-[#2E7D32]" : "hover:bg-[#E8F5E9] hover:text-[#2E7D32]"} ${isCollapsed ? "px-3" : ""}`}
+                  >
+                    <Icon className={`w-4 h-4 ${isActive(link.path) ? "text-[#4CAF50]" : ""} ${isCollapsed ? "" : "mr-3"}`} />
+                    {!isCollapsed && <span className="text-[15px]">{link.label}</span>}
+                  </Button>
+                </Link>
+              );
+            })}
+          </CollapsibleContent>
         </Collapsible>
       </nav>
 

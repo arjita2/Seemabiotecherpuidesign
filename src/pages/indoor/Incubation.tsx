@@ -27,6 +27,10 @@ export function Incubation() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
   const [editingRecord, setEditingRecord] = useState<IncubationRecord | null>(null);
+  const [formData, setFormData] = useState({
+    chamber: "",
+    status: "",
+  });
 
   const formRefs = {
     id: useRef<HTMLInputElement>(null),
@@ -67,9 +71,9 @@ export function Incubation() {
       temperature: formRefs.temperature.current?.value || "",
       light: formRefs.light.current?.value || "",
       humidity: formRefs.humidity.current?.value || "",
-      chamber: formRefs.chamber.current?.value || "",
+      chamber: formData.chamber || "",
       observations: formRefs.observations.current?.value || "",
-      status: (formRefs.status.current?.value || "pending") as StatusType,
+      status: (formData.status || "pending") as StatusType,
     };
 
     if (editingId && editingRecord) {
@@ -84,11 +88,16 @@ export function Incubation() {
     Object.values(formRefs).forEach((ref) => {
       if (ref.current) ref.current.value = "";
     });
-  }, [dispatch, editingId, editingRecord, records.length]);
+    setFormData({ chamber: "", status: "" });
+  }, [dispatch, editingId, editingRecord, records.length, formData]);
 
   const handleEdit = useCallback((record: IncubationRecord) => {
     setEditingRecord(record);
     dispatch(setEditingId(record.id));
+    setFormData({
+      chamber: record.chamber,
+      status: record.status,
+    });
 
     setTimeout(() => {
       if (formRefs.id.current) formRefs.id.current.value = record.id;
@@ -117,6 +126,7 @@ export function Incubation() {
     Object.values(formRefs).forEach((ref) => {
       if (ref.current) ref.current.value = "";
     });
+    setFormData({ chamber: "", status: "" });
   }, [dispatch]);
 
   return (
@@ -177,11 +187,11 @@ export function Incubation() {
                 </div>
                 <div className="space-y-2">
                   <Label>Incubation Chamber</Label>
-                  <Select onValueChange={(v) => { if (formRefs.chamber.current) formRefs.chamber.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.chamber as any}>
+                  <Select value={formData.chamber} onValueChange={(v) => { setFormData(prev => ({ ...prev, chamber: v })); if (formRefs.chamber.current) formRefs.chamber.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.chamber as any} className="bg-white">
                       <SelectValue placeholder="Select chamber" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="IC-01">IC-01</SelectItem>
                       <SelectItem value="IC-02">IC-02</SelectItem>
                       <SelectItem value="IC-03">IC-03</SelectItem>
@@ -195,11 +205,11 @@ export function Incubation() {
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select onValueChange={(v) => { if (formRefs.status.current) formRefs.status.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.status as any}>
+                  <Select value={formData.status} onValueChange={(v) => { setFormData(prev => ({ ...prev, status: v })); if (formRefs.status.current) formRefs.status.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.status as any} className="bg-white">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>

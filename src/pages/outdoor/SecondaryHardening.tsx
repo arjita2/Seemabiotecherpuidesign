@@ -27,6 +27,12 @@ export function SecondaryHardening() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
   const [editingRecord, setEditingRecord] = useState<SecondaryHardeningRecord | null>(null);
+  const [formData, setFormData] = useState({
+    crop: "",
+    tunnel: "",
+    bed: "",
+    status: "",
+  });
 
   const formRefs = {
     id: useRef<HTMLInputElement>(null),
@@ -66,16 +72,16 @@ export function SecondaryHardening() {
       id: formRefs.id.current?.value || `SH-2024-${records.length + 1}`,
       date: formRefs.date.current?.value || "",
       batchName: formRefs.batchName.current?.value || "",
-      crop: formRefs.crop.current?.value || "",
-      tunnel: formRefs.tunnel.current?.value || "",
-      bed: formRefs.bed.current?.value || "",
+      crop: formData.crop || "",
+      tunnel: formData.tunnel || "",
+      bed: formData.bed || "",
       row: formRefs.row.current?.value || "",
       cavity: formRefs.cavity.current?.value || "",
       plants: parseInt(formRefs.plants.current?.value || "0"),
       workers: parseInt(formRefs.workers.current?.value || "0"),
       waitingPeriod: formRefs.waitingPeriod.current?.value || "",
       survivability: formRefs.survivability.current?.value || "",
-      status: (formRefs.status.current?.value || "pending") as StatusType,
+      status: (formData.status || "pending") as StatusType,
     };
 
     if (editingId && editingRecord) {
@@ -90,11 +96,18 @@ export function SecondaryHardening() {
     Object.values(formRefs).forEach((ref) => {
       if (ref.current) ref.current.value = "";
     });
-  }, [dispatch, editingId, editingRecord, records.length]);
+    setFormData({ crop: "", tunnel: "", bed: "", status: "" });
+  }, [dispatch, editingId, editingRecord, records.length, formData]);
 
   const handleEdit = useCallback((record: SecondaryHardeningRecord) => {
     setEditingRecord(record);
     dispatch(setEditingId(record.id));
+    setFormData({
+      crop: record.crop,
+      tunnel: record.tunnel,
+      bed: record.bed,
+      status: record.status,
+    });
 
     setTimeout(() => {
       if (formRefs.id.current) formRefs.id.current.value = record.id;
@@ -126,6 +139,7 @@ export function SecondaryHardening() {
     Object.values(formRefs).forEach((ref) => {
       if (ref.current) ref.current.value = "";
     });
+    setFormData({ crop: "", tunnel: "", bed: "", status: "" });
   }, [dispatch]);
 
   return (
@@ -166,11 +180,11 @@ export function SecondaryHardening() {
                 </div>
                 <div className="space-y-2">
                   <Label>Crop Type</Label>
-                  <Select onValueChange={(v) => { if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.crop as any}>
+                  <Select value={formData.crop} onValueChange={(v) => { setFormData(prev => ({ ...prev, crop: v })); if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.crop as any} className="bg-white">
                       <SelectValue placeholder="Select crop" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Banana">Banana</SelectItem>
                       <SelectItem value="Bamboo">Bamboo</SelectItem>
                       <SelectItem value="Teak">Teak</SelectItem>
@@ -180,11 +194,11 @@ export function SecondaryHardening() {
                 </div>
                 <div className="space-y-2">
                   <Label>Tunnel</Label>
-                  <Select onValueChange={(v) => { if (formRefs.tunnel.current) formRefs.tunnel.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.tunnel as any}>
+                  <Select value={formData.tunnel} onValueChange={(v) => { setFormData(prev => ({ ...prev, tunnel: v })); if (formRefs.tunnel.current) formRefs.tunnel.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.tunnel as any} className="bg-white">
                       <SelectValue placeholder="Select tunnel" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="SH-T1">SH-T1</SelectItem>
                       <SelectItem value="SH-T2">SH-T2</SelectItem>
                       <SelectItem value="SH-T3">SH-T3</SelectItem>
@@ -193,11 +207,11 @@ export function SecondaryHardening() {
                 </div>
                 <div className="space-y-2">
                   <Label>Bed</Label>
-                  <Select onValueChange={(v) => { if (formRefs.bed.current) formRefs.bed.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.bed as any}>
+                  <Select value={formData.bed} onValueChange={(v) => { setFormData(prev => ({ ...prev, bed: v })); if (formRefs.bed.current) formRefs.bed.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.bed as any} className="bg-white">
                       <SelectValue placeholder="Select bed" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="SB1">SB1</SelectItem>
                       <SelectItem value="SB2">SB2</SelectItem>
                       <SelectItem value="SB3">SB3</SelectItem>
@@ -230,11 +244,11 @@ export function SecondaryHardening() {
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select onValueChange={(v) => { if (formRefs.status.current) formRefs.status.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.status as any}>
+                  <Select value={formData.status} onValueChange={(v) => { setFormData(prev => ({ ...prev, status: v })); if (formRefs.status.current) formRefs.status.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.status as any} className="bg-white">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>

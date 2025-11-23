@@ -28,6 +28,14 @@ export function OutdoorSampling() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
   const [editingRecord, setEditingRecord] = useState<OutdoorSamplingRecord | null>(null);
+  const [formData, setFormData] = useState({
+    stage: "",
+    crop: "",
+    sampleType: "",
+    testType: "",
+    govVerified: "",
+    status: "",
+  });
 
   const formRefs = {
     id: useRef<HTMLInputElement>(null),
@@ -67,16 +75,16 @@ export function OutdoorSampling() {
       id: formRefs.id.current?.value || `OS-2024-${records.length + 1}`,
       date: formRefs.date.current?.value || "",
       batchID: formRefs.batchID.current?.value || "",
-      stage: formRefs.stage.current?.value || "",
-      crop: formRefs.crop.current?.value || "",
-      sampleType: formRefs.sampleType.current?.value || "",
-      testType: formRefs.testType.current?.value || "",
+      stage: formData.stage || "",
+      crop: formData.crop || "",
+      sampleType: formData.sampleType || "",
+      testType: formData.testType || "",
       result: formRefs.result.current?.value || "",
       testedBy: formRefs.testedBy.current?.value || "",
       remarks: formRefs.remarks.current?.value || "",
-      govVerified: formRefs.govVerified.current?.value || "No",
+      govVerified: formData.govVerified || "No",
       certNumber: formRefs.certNumber.current?.value || "",
-      status: (formRefs.status.current?.value || "pending") as StatusType,
+      status: (formData.status || "pending") as StatusType,
     };
 
     if (editingId && editingRecord) {
@@ -91,11 +99,20 @@ export function OutdoorSampling() {
     Object.values(formRefs).forEach((ref) => {
       if (ref.current) ref.current.value = "";
     });
-  }, [dispatch, editingId, editingRecord, records.length]);
+    setFormData({ stage: "", crop: "", sampleType: "", testType: "", govVerified: "", status: "" });
+  }, [dispatch, editingId, editingRecord, records.length, formData]);
 
   const handleEdit = useCallback((record: OutdoorSamplingRecord) => {
     setEditingRecord(record);
     dispatch(setEditingId(record.id));
+    setFormData({
+      stage: record.stage,
+      crop: record.crop,
+      sampleType: record.sampleType,
+      testType: record.testType,
+      govVerified: record.govVerified || "No",
+      status: record.status,
+    });
 
     setTimeout(() => {
       if (formRefs.id.current) formRefs.id.current.value = record.id;
@@ -127,6 +144,7 @@ export function OutdoorSampling() {
     Object.values(formRefs).forEach((ref) => {
       if (ref.current) ref.current.value = "";
     });
+    setFormData({ stage: "", crop: "", sampleType: "", testType: "", govVerified: "", status: "" });
   }, [dispatch]);
 
   return (
@@ -171,11 +189,11 @@ export function OutdoorSampling() {
                 </div>
                 <div className="space-y-2">
                   <Label>Stage</Label>
-                  <Select onValueChange={(v) => { if (formRefs.stage.current) formRefs.stage.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.stage as any}>
+                  <Select value={formData.stage} onValueChange={(v) => { setFormData(prev => ({ ...prev, stage: v })); if (formRefs.stage.current) formRefs.stage.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.stage as any} className="bg-white">
                       <SelectValue placeholder="Select stage" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Primary">Primary Hardening</SelectItem>
                       <SelectItem value="Secondary">Secondary Hardening</SelectItem>
                     </SelectContent>
@@ -183,11 +201,11 @@ export function OutdoorSampling() {
                 </div>
                 <div className="space-y-2">
                   <Label>Crop Type</Label>
-                  <Select onValueChange={(v) => { if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.crop as any}>
+                  <Select value={formData.crop} onValueChange={(v) => { setFormData(prev => ({ ...prev, crop: v })); if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.crop as any} className="bg-white">
                       <SelectValue placeholder="Select crop" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Banana">Banana</SelectItem>
                       <SelectItem value="Bamboo">Bamboo</SelectItem>
                       <SelectItem value="Teak">Teak</SelectItem>
@@ -197,11 +215,11 @@ export function OutdoorSampling() {
                 </div>
                 <div className="space-y-2">
                   <Label>Sample Type</Label>
-                  <Select onValueChange={(v) => { if (formRefs.sampleType.current) formRefs.sampleType.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.sampleType as any}>
+                  <Select value={formData.sampleType} onValueChange={(v) => { setFormData(prev => ({ ...prev, sampleType: v })); if (formRefs.sampleType.current) formRefs.sampleType.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.sampleType as any} className="bg-white">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Plant Health">Plant Health</SelectItem>
                       <SelectItem value="Soil Quality">Soil Quality</SelectItem>
                       <SelectItem value="Water Quality">Water Quality</SelectItem>
@@ -211,11 +229,11 @@ export function OutdoorSampling() {
                 </div>
                 <div className="space-y-2">
                   <Label>Test Type</Label>
-                  <Select onValueChange={(v) => { if (formRefs.testType.current) formRefs.testType.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.testType as any}>
+                  <Select value={formData.testType} onValueChange={(v) => { setFormData(prev => ({ ...prev, testType: v })); if (formRefs.testType.current) formRefs.testType.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.testType as any} className="bg-white">
                       <SelectValue placeholder="Select test" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Visual Inspection">Visual Inspection</SelectItem>
                       <SelectItem value="Leaf Analysis">Leaf Analysis</SelectItem>
                       <SelectItem value="pH & Nutrients">pH & Nutrients</SelectItem>
@@ -237,11 +255,11 @@ export function OutdoorSampling() {
                 </div>
                 <div className="space-y-2">
                   <Label>Verified by Government</Label>
-                  <Select onValueChange={(v) => { if (formRefs.govVerified.current) formRefs.govVerified.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.govVerified as any}>
+                  <Select value={formData.govVerified} onValueChange={(v) => { setFormData(prev => ({ ...prev, govVerified: v })); if (formRefs.govVerified.current) formRefs.govVerified.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.govVerified as any} className="bg-white">
                       <SelectValue placeholder="Select verification status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Yes">Yes</SelectItem>
                       <SelectItem value="No">No</SelectItem>
                     </SelectContent>
@@ -253,11 +271,11 @@ export function OutdoorSampling() {
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select onValueChange={(v) => { if (formRefs.status.current) formRefs.status.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.status as any}>
+                  <Select value={formData.status} onValueChange={(v) => { setFormData(prev => ({ ...prev, status: v })); if (formRefs.status.current) formRefs.status.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.status as any} className="bg-white">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>

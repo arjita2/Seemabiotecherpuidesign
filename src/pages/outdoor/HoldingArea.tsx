@@ -27,6 +27,12 @@ export function HoldingArea() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
   const [editingRecord, setEditingRecord] = useState<HoldingAreaRecord | null>(null);
+  const [formData, setFormData] = useState({
+    crop: "",
+    location: "",
+    condition: "",
+    status: "",
+  });
 
   const formRefs = {
     id: useRef<HTMLInputElement>(null),
@@ -63,14 +69,14 @@ export function HoldingArea() {
       id: formRefs.id.current?.value || `HA-2024-${records.length + 1}`,
       date: formRefs.date.current?.value || "",
       batchID: formRefs.batchID.current?.value || "",
-      crop: formRefs.crop.current?.value || "",
+      crop: formData.crop || "",
       variety: formRefs.variety.current?.value || "",
       quantity: parseInt(formRefs.quantity.current?.value || "0"),
-      location: formRefs.location.current?.value || "",
+      location: formData.location || "",
       daysinHolding: 0,
-      condition: formRefs.condition.current?.value || "",
+      condition: formData.condition || "",
       dispatchDate: formRefs.dispatchDate.current?.value || "",
-      status: (formRefs.status.current?.value || "pending") as StatusType,
+      status: (formData.status || "pending") as StatusType,
     };
 
     if (editingId && editingRecord) {
@@ -85,11 +91,18 @@ export function HoldingArea() {
     Object.values(formRefs).forEach((ref) => {
       if (ref.current) ref.current.value = "";
     });
-  }, [dispatch, editingId, editingRecord, records.length]);
+    setFormData({ crop: "", location: "", condition: "", status: "" });
+  }, [dispatch, editingId, editingRecord, records.length, formData]);
 
   const handleEdit = useCallback((record: HoldingAreaRecord) => {
     setEditingRecord(record);
     dispatch(setEditingId(record.id));
+    setFormData({
+      crop: record.crop,
+      location: record.location,
+      condition: record.condition,
+      status: record.status,
+    });
 
     setTimeout(() => {
       if (formRefs.id.current) formRefs.id.current.value = record.id;
@@ -118,6 +131,7 @@ export function HoldingArea() {
     Object.values(formRefs).forEach((ref) => {
       if (ref.current) ref.current.value = "";
     });
+    setFormData({ crop: "", location: "", condition: "", status: "" });
   }, [dispatch]);
 
   return (
@@ -158,11 +172,11 @@ export function HoldingArea() {
                 </div>
                 <div className="space-y-2">
                   <Label>Crop Type</Label>
-                  <Select onValueChange={(v) => { if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.crop as any}>
+                  <Select value={formData.crop} onValueChange={(v) => { setFormData(prev => ({ ...prev, crop: v })); if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.crop as any} className="bg-white">
                       <SelectValue placeholder="Select crop" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Banana">Banana</SelectItem>
                       <SelectItem value="Bamboo">Bamboo</SelectItem>
                       <SelectItem value="Teak">Teak</SelectItem>
@@ -180,11 +194,11 @@ export function HoldingArea() {
                 </div>
                 <div className="space-y-2">
                   <Label>Location Zone</Label>
-                  <Select onValueChange={(v) => { if (formRefs.location.current) formRefs.location.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.location as any}>
+                  <Select value={formData.location} onValueChange={(v) => { setFormData(prev => ({ ...prev, location: v })); if (formRefs.location.current) formRefs.location.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.location as any} className="bg-white">
                       <SelectValue placeholder="Select zone" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Zone A-1">Zone A-1</SelectItem>
                       <SelectItem value="Zone A-2">Zone A-2</SelectItem>
                       <SelectItem value="Zone B-1">Zone B-1</SelectItem>
@@ -194,11 +208,11 @@ export function HoldingArea() {
                 </div>
                 <div className="space-y-2">
                   <Label>Plant Condition</Label>
-                  <Select onValueChange={(v) => { if (formRefs.condition.current) formRefs.condition.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.condition as any}>
+                  <Select value={formData.condition} onValueChange={(v) => { setFormData(prev => ({ ...prev, condition: v })); if (formRefs.condition.current) formRefs.condition.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.condition as any} className="bg-white">
                       <SelectValue placeholder="Select condition" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Excellent">Excellent</SelectItem>
                       <SelectItem value="Good">Good</SelectItem>
                       <SelectItem value="Fair">Fair</SelectItem>
@@ -211,11 +225,11 @@ export function HoldingArea() {
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select onValueChange={(v) => { if (formRefs.status.current) formRefs.status.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.status as any}>
+                  <Select value={formData.status} onValueChange={(v) => { setFormData(prev => ({ ...prev, status: v })); if (formRefs.status.current) formRefs.status.current.value = v; }}>
+                    <SelectTrigger ref={formRefs.status as any} className="bg-white">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
